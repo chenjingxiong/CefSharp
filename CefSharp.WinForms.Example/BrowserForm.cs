@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using CefSharp.Example;
 using CefSharp.Example.Callback;
+using CefSharp.Example.Configuration;
 using CefSharp.Example.Handlers;
 using CefSharp.WinForms.Host;
 
@@ -32,7 +33,9 @@ namespace CefSharp.WinForms.Example
 
             var bitness = RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
             Text = "CefSharp.WinForms.Example - " + bitness;
-            WindowState = FormWindowState.Maximized;
+
+            // 应用配置文件中的窗口设置
+            ApplyWindowConfig();
 
             Load += BrowserFormLoad;
 
@@ -59,6 +62,52 @@ namespace CefSharp.WinForms.Example
         private void BrowserFormLoad(object sender, EventArgs e)
         {
             AddTab(CefExample.DefaultUrl);
+        }
+
+        /// <summary>
+        /// 应用窗口配置
+        /// </summary>
+        private void ApplyWindowConfig()
+        {
+            try
+            {
+                var config = ConfigManager.CurrentConfig;
+                var windowConfig = config.Window;
+
+                // 设置窗口尺寸
+                if (windowConfig.Width > 0)
+                {
+                    Width = windowConfig.Width;
+                }
+                if (windowConfig.Height > 0)
+                {
+                    Height = windowConfig.Height;
+                }
+
+                // 设置窗口状态
+                switch (windowConfig.WindowState?.ToLower())
+                {
+                    case "maximized":
+                        WindowState = FormWindowState.Maximized;
+                        break;
+                    case "minimized":
+                        WindowState = FormWindowState.Minimized;
+                        break;
+                    default:
+                        WindowState = FormWindowState.Normal;
+                        break;
+                }
+
+                // 应用字体设置
+                Font = new System.Drawing.Font(
+                    config.Font.Family,
+                    config.Font.Size
+                );
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to apply window config: {ex.Message}");
+            }
         }
 
         /// <summary>

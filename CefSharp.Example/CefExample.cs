@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using CefSharp.Example.Configuration;
 using CefSharp.Example.Proxy;
 using CefSharp.SchemeHandler;
 
@@ -52,6 +53,9 @@ namespace CefSharp.Example
 
         public static void Init(CefSettingsBase settings, IBrowserProcessHandler browserProcessHandler)
         {
+            // 加载配置文件
+            var config = ConfigManager.CurrentConfig;
+
             // Set Google API keys, used for Geolocation requests sans GPS.  See http://www.chromium.org/developers/how-tos/api-keys
             // Environment.SetEnvironmentVariable("GOOGLE_API_KEY", "");
             // Environment.SetEnvironmentVariable("GOOGLE_DEFAULT_CLIENT_ID", "");
@@ -71,14 +75,26 @@ namespace CefSharp.Example
             //isolation to determine if they are causing issues.
             //The command line arguments shown here are here as a reference only and are not tested to confirm they work with each version
 
-            settings.RemoteDebuggingPort = 8088;
-            //The location where cache data will be stored on disk. If empty an in-memory cache will be used for some features and a temporary disk cache for others.
-            //HTML5 databases such as localStorage will only persist across sessions if a cache path is specified. 
-            settings.RootCachePath = Path.GetFullPath("cache");
-            //If non-null then CachePath must be equal to or a child of RootCachePath
-            //We're using a sub folder.
-            //
-            settings.CachePath = Path.GetFullPath("cache\\global");
+            // 从配置文件读取远程调试端口
+            settings.RemoteDebuggingPort = config.Persistence.RemoteDebuggingPort;
+
+            // 从配置文件读取持久化设置
+            if (config.Persistence.EnableCache)
+            {
+                //The location where cache data will be stored on disk. If empty an in-memory cache will be used for some features and a temporary disk cache for others.
+                //HTML5 databases such as localStorage will only persist across sessions if a cache path is specified.
+                settings.RootCachePath = Path.GetFullPath(config.Persistence.RootCachePath);
+                //If non-null then CachePath must be equal to or a child of RootCachePath
+                //We're using a sub folder.
+                //
+                settings.CachePath = Path.GetFullPath(Path.Combine(config.Persistence.CachePath, "global"));
+            }
+
+            // 设置是否持久化 Session Cookies
+            settings.PersistSessionCookies = config.Persistence.PersistSessionCookies;
+
+            // 设置背景颜色
+            settings.BackgroundColor = ConfigManager.ColorToArgb(config.Appearance.BackgroundColor);
             //settings.UserAgent = "CefSharp Browser" + Cef.CefSharpVersion; // Example User Agent
             //settings.CefCommandLineArgs.Add("renderer-startup-dialog");
             //settings.CefCommandLineArgs.Add("disable-site-isolation-trials");

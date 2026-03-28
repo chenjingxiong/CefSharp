@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using CefSharp.Example;
+using CefSharp.Example.Configuration;
 using CefSharp.Example.Handlers;
 using CefSharp.Wpf.Example.Controls;
 using CefSharp.Wpf.Example.ViewModels;
@@ -44,6 +45,9 @@ namespace CefSharp.Wpf.Example
 
             var bitness = RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
             Title += " - " + bitness;
+
+            // 应用配置文件中的窗口设置
+            ApplyWindowConfig();
         }
 
         private void CloseTab(object sender, ExecutedRoutedEventArgs e)
@@ -81,6 +85,46 @@ namespace CefSharp.Wpf.Example
         private void MainWindowLoaded(object sender, RoutedEventArgs e)
         {
             CreateNewTab(CefExample.DefaultUrl, true);
+        }
+
+        /// <summary>
+        /// 应用窗口配置
+        /// </summary>
+        private void ApplyWindowConfig()
+        {
+            try
+            {
+                var config = ConfigManager.CurrentConfig;
+                var windowConfig = config.Window;
+
+                // 设置窗口尺寸
+                if (windowConfig.Width > 0)
+                {
+                    Width = windowConfig.Width;
+                }
+                if (windowConfig.Height > 0)
+                {
+                    Height = windowConfig.Height;
+                }
+
+                // 设置窗口状态
+                switch (windowConfig.WindowState?.ToLower())
+                {
+                    case "maximized":
+                        WindowState = WindowState.Maximized;
+                        break;
+                    case "minimized":
+                        WindowState = WindowState.Minimized;
+                        break;
+                    default:
+                        WindowState = WindowState.Normal;
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to apply window config: {ex.Message}");
+            }
         }
 
         private void CreateNewTab(string url = DefaultUrlForAddedTabs, bool showSideBar = false, bool legacyBindingEnabled = false)

@@ -1,0 +1,173 @@
+/**
+ * CefSharp 深色主题样式
+ * 使用配置文件中的颜色设置
+ */
+
+/* 默认背景颜色 */
+body {
+    background-color: #1E1E1E !important;
+    color: #FFFFFF !important;
+    font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif !important;
+    font-size: 16px !important;
+}
+
+/* 导航栏深色主题 */
+.navbar-inverse {
+    background-color: #252526 !important;
+    border-color: #3E3E42 !important;
+}
+
+.navbar-inverse .navbar-brand {
+    color: #FFFFFF !important;
+}
+
+.navbar-inverse .navbar-nav > li > a {
+    color: #CCCCCC !important;
+}
+
+.navbar-inverse .navbar-nav > .active > a,
+.navbar-inverse .navbar-nav > .active > a:hover,
+.navbar-inverse .navbar-nav > .active > a:focus {
+    background-color: #0E0E0E !important;
+    color: #FFFFFF !important;
+}
+
+/* 容器深色背景 */
+.bs-header {
+    background-color: #2D2D30 !important;
+    color: #FFFFFF !important;
+    border-bottom: 1px solid #3E3E42 !important;
+}
+
+.container {
+    color: #FFFFFF !important;
+}
+
+/* 侧边栏深色主题 */
+.bs-sidebar {
+    background-color: #252526 !important;
+    border: 1px solid #3E3E42 !important;
+}
+
+.bs-sidenav {
+    background-color: #252526 !important;
+}
+
+.bs-sidenav > li > a {
+    color: #CCCCCC !important;
+    border: 1px solid #3E3E42 !important;
+}
+
+.bs-sidenav > li > a:hover,
+.bs-sidenav > li > a:focus {
+    background-color: #2D2D30 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #007ACC !important;
+}
+
+.bs-sidenav > .active > a,
+.bs-sidenav > .active > a:hover,
+.bs-sidenav > .active > a:focus {
+    color: #FFFFFF !important;
+    background-color: #0E0E0E !important;
+    border: 1px solid #007ACC !important;
+}
+
+/* 链接颜色 */
+a {
+    color: #4FC3F7 !important;
+}
+
+a:hover,
+a:focus {
+    color: #81D4FA !important;
+}
+
+/* 标题颜色 */
+h1, h2, h3, h4, h5, h6 {
+    color: #FFFFFF !important;
+}
+
+.page-header {
+    border-bottom: 1px solid #3E3E42 !important;
+}
+
+/* 代码块深色主题 */
+pre {
+    background-color: #1E1E1E !important;
+    border: 1px solid #3E3E42 !important;
+    color: #DCDCAA !important;
+}
+
+code {
+    background-color: #2D2D30 !important;
+    color: #DCDCAA !important;
+    padding: 2px 6px !important;
+}
+
+pre code {
+    background-color: transparent !important;
+    color: inherit !important;
+}
+
+/* 表格深色主题 */
+.table {
+    color: #FFFFFF !important;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: #2D2D30 !important;
+}
+
+.table-hover > tbody > tr:hover {
+    background-color: #3E3E42 !important;
+}
+
+/* 按钮深色主题 */
+.btn-primary {
+    background-color: #007ACC !important;
+    border-color: #005A9E !important;
+    color: #FFFFFF !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: #0097FB !important;
+    border-color: #007ACC !important;
+}
+
+/* 输入框深色主题 */
+input,
+textarea,
+select {
+    background-color: #3C3C3C !important;
+    border: 1px solid #3E3E42 !important;
+    color: #FFFFFF !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    background-color: #1E1E1E !important;
+    border-color: #007ACC !important;
+    color: #FFFFFF !important;
+}
+
+/* 滚动条深色主题 */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1E1E1E;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #424242;
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4E4E4E;
+}

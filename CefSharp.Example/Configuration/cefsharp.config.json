@@ -1,0 +1,48 @@
+{
+  // CefSharp 浏览器配置文件
+  // 此文件与可执行文件放在同一目录
+
+  "window": {
+    // 窗口宽度
+    "width": 2048,
+    // 窗口高度
+    "height": 1024,
+    // 窗口启动状态: Normal, Maximized, Minimized
+    "windowState": "Normal",
+    // 是否记住窗口位置和大小
+    "rememberWindowState": true
+  },
+
+  "font": {
+    // 默认字体名称
+    "family": "Microsoft YaHei",
+    // 默认字体大小
+    "size": 16,
+    // 是否启用字体平滑
+    "antiAlias": true
+  },
+
+  "appearance": {
+    // 背景颜色（十六进制）
+    "backgroundColor": "#1E1E1E",
+    // 默认网页背景颜色
+    "defaultPageBackgroundColor": "#1E1E1E",
+    // 默认文本颜色
+    "textColor": "#FFFFFF"
+  },
+
+  "persistence": {
+    // 是否启用持久化缓存
+    "enableCache": true,
+    // 缓存目录路径（相对于程序目录）
+    "cachePath": "cache",
+    // 根缓存目录路径
+    "rootCachePath": "cache",
+    // 是否持久化 Session Cookies
+    "persistSessionCookies": true,
+    // 是否启用用户偏好持久化
+    "persistUserPreferences": true,
+    // 远程调试端口（0 表示禁用）
+    "remoteDebuggingPort": 8088
+  }
+}
