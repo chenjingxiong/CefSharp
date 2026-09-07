@@ -58,6 +58,9 @@ namespace CefSharp
                     item->IsInProgress = downloadItem->IsInProgress();
                     item->IsComplete = downloadItem->IsComplete();
                     item->IsCancelled = downloadItem->IsCanceled();
+                    item->IsPaused = downloadItem->IsPaused();
+                    item->IsInterrupted = downloadItem->IsInterrupted();
+                    item->InterruptReason = (DownloadInterruptReason)downloadItem->GetInterruptReason();
                     item->CurrentSpeed = downloadItem->GetCurrentSpeed();
                     item->PercentComplete = downloadItem->GetPercentComplete();
                     item->TotalBytes = downloadItem->GetTotalBytes();

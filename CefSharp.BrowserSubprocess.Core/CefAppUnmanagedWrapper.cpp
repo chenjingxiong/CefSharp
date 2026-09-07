@@ -62,7 +62,13 @@ namespace CefSharp
             _onBrowserCreated->Invoke(wrapper);
 
             //Multiple CefBrowserWrappers created when opening popups
-            _browserWrappers->TryAdd(browser->GetIdentifier(), wrapper);
+            auto browserId = browser->GetIdentifier();
+            _browserWrappers->TryAdd(browserId, wrapper);
+
+            static gcroot<Func<int, JavascriptBindingSettings^>^> factory =
+                gcnew Func<int, JavascriptBindingSettings^>(CefAppUnmanagedWrapper::JavascriptBindingSettingsFactory);
+
+            auto javascriptBindingSettings = _browserJavascriptBindingSettings->GetOrAdd(browserId, factory);
 
             if (!extraInfo.get())
             {
@@ -74,9 +80,9 @@ namespace CefSharp
             //will override the _legacyBindingEnabled field
             if (!browser->IsPopup())
             {
-                _legacyBindingEnabled = extraInfo->GetBool("LegacyBindingEnabled");
+                javascriptBindingSettings->LegacyBindingEnabled = extraInfo->GetBool("LegacyBindingEnabled");
 
-                if (_legacyBindingEnabled)
+                if (javascriptBindingSettings->LegacyBindingEnabled)
                 {
                     auto objects = extraInfo->GetList("LegacyBindingObjects");
                     if (objects.get() && objects->IsValid())
@@ -103,19 +109,19 @@ namespace CefSharp
 
             if (extraInfo->HasKey("JavascriptBindingApiEnabled"))
             {
-                wrapper->JavascriptBindingApiEnabled = extraInfo->GetBool("JavascriptBindingApiEnabled");
+                javascriptBindingSettings->JavascriptBindingApiEnabled = extraInfo->GetBool("JavascriptBindingApiEnabled");
             }
 
             if (extraInfo->HasKey("JavascriptBindingApiHasAllowOrigins"))
             {
-                wrapper->JavascriptBindingApiHasAllowOrigins = extraInfo->GetBool("JavascriptBindingApiHasAllowOrigins");
+                javascriptBindingSettings->JavascriptBindingApiHasAllowOrigins = extraInfo->GetBool("JavascriptBindingApiHasAllowOrigins");
 
-                if (wrapper->JavascriptBindingApiHasAllowOrigins)
+                if (javascriptBindingSettings->JavascriptBindingApiHasAllowOrigins)
                 {
                     auto allowOrigins = extraInfo->GetList("JavascriptBindingApiAllowOrigins");
                     if (allowOrigins.get() && allowOrigins->IsValid())
                     {
-                        wrapper->JavascriptBindingApiAllowOrigins = allowOrigins->Copy();
+                        javascriptBindingSettings->JavascriptBindingApiAllowOrigins = allowOrigins->Copy();
                     }
                 }
             }
@@ -123,8 +129,8 @@ namespace CefSharp
             if (extraInfo->HasKey("JsBindingPropertyName") || extraInfo->HasKey("JsBindingPropertyNameCamelCase"))
             {
                 //TODO: Create constant for these and legacy binding strings above
-                _jsBindingPropertyName = extraInfo->GetString("JsBindingPropertyName");
-                _jsBindingPropertyNameCamelCase = extraInfo->GetString("JsBindingPropertyNameCamelCase");
+                javascriptBindingSettings->JavascriptBindingPropertyName = StringUtils::ToClr(extraInfo->GetString("JsBindingPropertyName"));
+                javascriptBindingSettings->JavascriptBindingPropertyNameCamelCase = StringUtils::ToClr(extraInfo->GetString("JsBindingPropertyNameCamelCase"));
             }
         }
 
@@ -136,6 +142,9 @@ namespace CefSharp
                 _onBrowserDestroyed->Invoke(wrapper);
                 delete wrapper;
             }
+
+            // Don't remove javascript settings because cef is unreliable in calling OnBrowserCreated/OnBrowserDestroyed consistently:
+            // https://github.com/cefsharp/CefSharp/issues/5228
         };
 
         void CefAppUnmanagedWrapper::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context)
@@ -155,63 +164,68 @@ namespace CefSharp
             bool isSameContext = frame->GetV8Context()->IsSame(context);
             if (!isSameContext)
                 return;
-            auto rootObject = GetJsRootObjectWrapper(browser->GetIdentifier(), frame->GetIdentifier());
 
-            if (_legacyBindingEnabled)
+            JavascriptBindingSettings^ javascriptBindingSettings = nullptr;
+            _browserJavascriptBindingSettings->TryGetValue(browser->GetIdentifier(), javascriptBindingSettings);
+
+            if (!Object::ReferenceEquals(javascriptBindingSettings, nullptr))
             {
-                if (_javascriptObjects->Count > 0 && rootObject != nullptr)
+                auto rootObject = GetJsRootObjectWrapper(browser->GetIdentifier(), frame->GetIdentifier());
+
+                if (javascriptBindingSettings->LegacyBindingEnabled)
                 {
-                    rootObject->Bind(_javascriptObjects->Values, context->GetGlobal());
-                }
-            }
-
-            auto browserWrapper = FindBrowserWrapper(browser->GetIdentifier());
-
-            if (browserWrapper != nullptr && browserWrapper->JavascriptBindingApiEnabled && IsJavascriptBindingApiAllowed(browserWrapper, frame))
-            {
-                //TODO: Look at adding some sort of javascript mapping layer to reduce the code duplication
-                auto global = context->GetGlobal();
-                auto processId = System::Diagnostics::Process::GetCurrentProcess()->Id;
-
-                //TODO: JSB: Split functions into their own classes
-                //Browser wrapper is only used for BindObjectAsync
-                auto bindObjAsyncFunction = CefV8Value::CreateFunction(kBindObjectAsync, new BindObjectAsyncHandler(_registerBoundObjectRegistry, _javascriptObjects, rootObject));
-                auto unBindObjFunction = CefV8Value::CreateFunction(kDeleteBoundObject, new RegisterBoundObjectHandler(_javascriptObjects));
-                auto removeObjectFromCacheFunction = CefV8Value::CreateFunction(kRemoveObjectFromCache, new RegisterBoundObjectHandler(_javascriptObjects));
-                auto isObjectCachedFunction = CefV8Value::CreateFunction(kIsObjectCached, new RegisterBoundObjectHandler(_javascriptObjects));
-                auto postMessageFunction = CefV8Value::CreateFunction(kPostMessage, new JavascriptPostMessageHandler(rootObject == nullptr ? nullptr : rootObject->CallbackRegistry));
-                auto promiseHandlerFunction = CefV8Value::CreateFunction(kSendEvalScriptResponse, new JavascriptPromiseHandler());
-
-                //By default We'll support both CefSharp and cefSharp, for those who prefer the JS style
-                auto createCefSharpObj = !_jsBindingPropertyName.empty();
-                auto createCefSharpObjCamelCase = !_jsBindingPropertyNameCamelCase.empty();
-
-                if (createCefSharpObj)
-                {
-                    auto cefSharpObj = CefV8Value::CreateObject(nullptr, nullptr);
-                    cefSharpObj->SetValue(kBindObjectAsync, bindObjAsyncFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
-                    cefSharpObj->SetValue(kDeleteBoundObject, unBindObjFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
-                    cefSharpObj->SetValue(kRemoveObjectFromCache, removeObjectFromCacheFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
-                    cefSharpObj->SetValue(kIsObjectCached, isObjectCachedFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
-                    cefSharpObj->SetValue(kPostMessage, postMessageFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
-                    cefSharpObj->SetValue(kSendEvalScriptResponse, promiseHandlerFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
-                    cefSharpObj->SetValue(kRenderProcessId, CefV8Value::CreateInt(processId), CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
-
-                    global->SetValue(_jsBindingPropertyName, cefSharpObj, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_READONLY);
+                    if (_javascriptObjects->Count > 0 && rootObject != nullptr)
+                    {
+                        rootObject->Bind(_javascriptObjects->Values, context->GetGlobal());
+                    }
                 }
 
-                if (createCefSharpObjCamelCase)
+                if (IsJavascriptBindingApiAllowed(javascriptBindingSettings, frame))
                 {
-                    auto cefSharpObjCamelCase = CefV8Value::CreateObject(nullptr, nullptr);
-                    cefSharpObjCamelCase->SetValue(kBindObjectAsyncCamelCase, bindObjAsyncFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
-                    cefSharpObjCamelCase->SetValue(kDeleteBoundObjectCamelCase, unBindObjFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
-                    cefSharpObjCamelCase->SetValue(kRemoveObjectFromCacheCamelCase, removeObjectFromCacheFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
-                    cefSharpObjCamelCase->SetValue(kIsObjectCachedCamelCase, isObjectCachedFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
-                    cefSharpObjCamelCase->SetValue(kPostMessageCamelCase, postMessageFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
-                    cefSharpObjCamelCase->SetValue(kSendEvalScriptResponseCamelCase, promiseHandlerFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
-                    cefSharpObjCamelCase->SetValue(kRenderProcessIdCamelCase, CefV8Value::CreateInt(processId), CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
+                    //TODO: Look at adding some sort of javascript mapping layer to reduce the code duplication
+                    auto global = context->GetGlobal();
+                    auto processId = System::Diagnostics::Process::GetCurrentProcess()->Id;
 
-                    global->SetValue(_jsBindingPropertyNameCamelCase, cefSharpObjCamelCase, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_READONLY);
+                    //TODO: JSB: Split functions into their own classes
+                    //Browser wrapper is only used for BindObjectAsync
+                    auto bindObjAsyncFunction = CefV8Value::CreateFunction(kBindObjectAsync, new BindObjectAsyncHandler(_registerBoundObjectRegistry, _javascriptObjects, rootObject));
+                    auto unBindObjFunction = CefV8Value::CreateFunction(kDeleteBoundObject, new RegisterBoundObjectHandler(_javascriptObjects));
+                    auto removeObjectFromCacheFunction = CefV8Value::CreateFunction(kRemoveObjectFromCache, new RegisterBoundObjectHandler(_javascriptObjects));
+                    auto isObjectCachedFunction = CefV8Value::CreateFunction(kIsObjectCached, new RegisterBoundObjectHandler(_javascriptObjects));
+                    auto postMessageFunction = CefV8Value::CreateFunction(kPostMessage, new JavascriptPostMessageHandler(rootObject == nullptr ? nullptr : rootObject->CallbackRegistry));
+                    auto promiseHandlerFunction = CefV8Value::CreateFunction(kSendEvalScriptResponse, new JavascriptPromiseHandler());
+
+                    //By default We'll support both CefSharp and cefSharp, for those who prefer the JS style
+                    auto createCefSharpObj = !String::IsNullOrEmpty(javascriptBindingSettings->JavascriptBindingPropertyName);
+                    auto createCefSharpObjCamelCase = !String::IsNullOrEmpty(javascriptBindingSettings->JavascriptBindingPropertyNameCamelCase);
+
+                    if (createCefSharpObj)
+                    {
+                        auto cefSharpObj = CefV8Value::CreateObject(nullptr, nullptr);
+                        cefSharpObj->SetValue(kBindObjectAsync, bindObjAsyncFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
+                        cefSharpObj->SetValue(kDeleteBoundObject, unBindObjFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
+                        cefSharpObj->SetValue(kRemoveObjectFromCache, removeObjectFromCacheFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
+                        cefSharpObj->SetValue(kIsObjectCached, isObjectCachedFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
+                        cefSharpObj->SetValue(kPostMessage, postMessageFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
+                        cefSharpObj->SetValue(kSendEvalScriptResponse, promiseHandlerFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
+                        cefSharpObj->SetValue(kRenderProcessId, CefV8Value::CreateInt(processId), CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
+
+                        global->SetValue(StringUtils::ToNative(javascriptBindingSettings->JavascriptBindingPropertyName), cefSharpObj, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_READONLY);
+                    }
+
+                    if (createCefSharpObjCamelCase)
+                    {
+                        auto cefSharpObjCamelCase = CefV8Value::CreateObject(nullptr, nullptr);
+                        cefSharpObjCamelCase->SetValue(kBindObjectAsyncCamelCase, bindObjAsyncFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
+                        cefSharpObjCamelCase->SetValue(kDeleteBoundObjectCamelCase, unBindObjFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
+                        cefSharpObjCamelCase->SetValue(kRemoveObjectFromCacheCamelCase, removeObjectFromCacheFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
+                        cefSharpObjCamelCase->SetValue(kIsObjectCachedCamelCase, isObjectCachedFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
+                        cefSharpObjCamelCase->SetValue(kPostMessageCamelCase, postMessageFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
+                        cefSharpObjCamelCase->SetValue(kSendEvalScriptResponseCamelCase, promiseHandlerFunction, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
+                        cefSharpObjCamelCase->SetValue(kRenderProcessIdCamelCase, CefV8Value::CreateInt(processId), CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_NONE);
+
+                        global->SetValue(StringUtils::ToNative(javascriptBindingSettings->JavascriptBindingPropertyNameCamelCase), cefSharpObjCamelCase, CefV8Value::PropertyAttribute::V8_PROPERTY_ATTRIBUTE_READONLY);
+                    }
                 }
             }
 
@@ -347,14 +361,24 @@ namespace CefSharp
             return rootObject;
         }
 
-        bool CefAppUnmanagedWrapper::IsJavascriptBindingApiAllowed(CefBrowserWrapper^ browserWrapper, CefRefPtr<CefFrame> frame)
+        bool CefAppUnmanagedWrapper::IsJavascriptBindingApiAllowed(JavascriptBindingSettings^ javascriptBindingSettings, CefRefPtr<CefFrame> frame)
         {
-            if (browserWrapper == nullptr || !browserWrapper->JavascriptBindingApiHasAllowOrigins)
+            if (javascriptBindingSettings == nullptr)
+            {
+                return false;
+            }
+
+            if (!javascriptBindingSettings->JavascriptBindingApiEnabled)
+            {
+                return false;
+            }
+
+            if (!javascriptBindingSettings->JavascriptBindingApiHasAllowOrigins)
             {
                 return true;
             }
 
-            auto allowOrigins = browserWrapper->JavascriptBindingApiAllowOrigins;
+            auto allowOrigins = javascriptBindingSettings->JavascriptBindingApiAllowOrigins;
             if (!allowOrigins.get())
             {
                 return false;

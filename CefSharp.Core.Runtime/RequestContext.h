@@ -16,6 +16,7 @@
 
 using namespace System::Runtime::InteropServices;
 using namespace System::Threading::Tasks;
+using namespace CefSharp::Callback;
 
 namespace CefSharp
 {
@@ -255,6 +256,23 @@ namespace CefSharp
             virtual bool CanSetPreference(String^ name);
 
             /// <summary>
+            /// Add an observer for preference changes. <paramref name="name"/> is the name of the
+            /// preference to observe. If <paramref name="name"/> is empty then all preferences will
+            /// be observed. Observing all preferences has performance consequences and
+            /// is not recommended outside of testing scenarios. The observer will remain
+            /// registered until the returned Registration object is destroyed. This
+            /// method must be called on the browser process UI thread.
+            /// </summary>
+            /// <param name="name">preference key</param>
+            /// <param name="observer">preference observer</param>
+            /// <remarks>Use Cef.UIThreadTaskFactory to execute this method if required,
+            /// <see cref="IBrowserProcessHandler.OnContextInitialized"/> and ChromiumWebBrowser.IsBrowserInitializedChanged are both
+            /// executed on the CEF UI thread, so can be called directly.
+            /// When CefSettings.MultiThreadedMessageLoop == false (the default is true) then the main
+            /// application thread will be the CEF UI thread.</remarks>
+            virtual IRegistration^ AddPreferenceObserver(String^ name, IPreferenceObserver^ observer);
+
+            /// <summary>
             /// Set the value associated with preference name. If value is null the
             /// preference will be restored to its default value. If setting the preference
             /// fails then error will be populated with a detailed description of the
@@ -281,6 +299,13 @@ namespace CefSharp
             /// <param name="callback">If is non-NULL it will be executed on the CEF UI thread after
             /// completion. This param is optional</param>
             virtual void ClearCertificateExceptions(ICompletionCallback^ callback);
+
+            /// <summary>
+            /// Clears the HTTP cache.
+            /// </summary>
+            /// <param name="callback">If is non-NULL it will be executed on the CEF UI thread after
+            /// completion. This param is optional</param>
+            virtual void ClearHttpCache(ICompletionCallback^ callback);
 
             /// <summary>
             /// Clears all HTTP authentication credentials that were added as part of handling

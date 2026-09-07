@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using CefSharp.Callback;
 using CefSharp.Enums;
 
 namespace CefSharp
@@ -175,9 +176,21 @@ namespace CefSharp
         }
 
         /// <inheritdoc/>
+        public IRegistration AddPreferenceObserver(string name, IPreferenceObserver observer)
+        {
+            return requestContext.AddPreferenceObserver(name, observer);
+        }
+
+        /// <inheritdoc/>
         public void ClearCertificateExceptions(ICompletionCallback callback)
         {
             requestContext.ClearCertificateExceptions(callback);
+        }
+
+        /// <inheritdoc/>
+        public void ClearHttpCache(ICompletionCallback callback = null)
+        {
+            requestContext.ClearHttpCache(callback);
         }
 
         /// <inheritdoc/>

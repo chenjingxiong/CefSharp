@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using CefSharp.Callback;
 using CefSharp.Enums;
 
 namespace CefSharp
@@ -159,6 +160,23 @@ namespace CefSharp
         bool SetPreference(string name, object value, out string error);
 
         /// <summary>
+        /// Add an observer for preference changes. <paramref name="name"/> is the name of the
+        /// preference to observe. If <paramref name="name"/> is empty then all preferences will
+        /// be observed. Observing all preferences has performance consequences and
+        /// is not recommended outside of testing scenarios. The observer will remain
+        /// registered until the returned Registration object is destroyed. This
+        /// method must be called on the browser process UI thread.
+        /// </summary>
+        /// <param name="name">preference key</param>
+        /// <param name="observer">preference observer</param>
+        /// <remarks>Use Cef.UIThreadTaskFactory to execute this method if required,
+        /// <see cref="IBrowserProcessHandler.OnContextInitialized"/> and ChromiumWebBrowser.IsBrowserInitializedChanged are both
+        /// executed on the CEF UI thread, so can be called directly.
+        /// When CefSettings.MultiThreadedMessageLoop == false (the default is true) then the main
+        /// application thread will be the CEF UI thread.</remarks>
+        IRegistration AddPreferenceObserver(string name, IPreferenceObserver observer);
+
+        /// <summary>
         /// Clears all certificate exceptions that were added as part of handling
         /// <see cref="IRequestHandler.OnCertificateError"/>. If you call this it is
         /// recommended that you also call <see cref="IRequestContext.CloseAllConnections"/> or you risk not
@@ -167,6 +185,13 @@ namespace CefSharp
         /// <param name="callback">If is non-NULL it will be executed on the CEF UI thread after
         /// completion. This param is optional</param>
         void ClearCertificateExceptions(ICompletionCallback callback);
+
+        /// <summary>
+        /// Clears the HTTP cache.
+        /// </summary>
+        /// <param name="callback">If is non-NULL it will be executed on the CEF UI thread after
+        /// completion. This param is optional</param>
+        void ClearHttpCache(ICompletionCallback callback = null);
 
         /// <summary>
         /// Clears all HTTP authentication credentials that were added as part of handling
