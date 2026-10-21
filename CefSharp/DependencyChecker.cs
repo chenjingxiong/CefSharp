@@ -57,8 +57,6 @@ namespace CefSharp
         {
             // Angle and Direct3D support
             // Note: Without these components HTML5 accelerated content like 2D canvas, 3D CSS and WebGL will not function.
-            "libEGL.dll",
-            "libGLESv2.dll",
             "d3dcompiler_47.dll",
             //Crashpad support
             "chrome_elf.dll"
@@ -76,7 +74,7 @@ namespace CefSharp
         /// <summary>
         /// List of CefSharp Arch Specific Dependencies
         /// Those that are arch specific,
-        /// distributed as x86, x64 and ARM64 (coming soon for .Net 5.0 only)
+        /// distributed as x86, x64 and ARM64.
         /// </summary>
         public static string[] CefSharpArchSpecificDependencies =
         {

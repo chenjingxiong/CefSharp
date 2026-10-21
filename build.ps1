@@ -1,13 +1,13 @@
 #requires -Version 5
 
 param(
-    [ValidateSet("vs2022","vs2019", "nupkg-only", "update-build-version")]
+    [ValidateSet("vs2022","vs2026", "nupkg-only", "update-build-version")]
     [Parameter(Position = 0)] 
     [string] $Target = "vs2022",
     [Parameter(Position = 1)]
-    [string] $Version = "151.3.160",
+    [string] $Version = "154.0.340",
     [Parameter(Position = 2)]
-    [string] $AssemblyVersion = "151.3.160",
+    [string] $AssemblyVersion = "154.0.340",
     [Parameter(Position = 3)]
     [ValidateSet("NetFramework", "NetCore")]
     [string] $TargetFramework = "NetFramework",
@@ -80,7 +80,7 @@ function Warn
 function BuildSolution
 {
     param(
-        [ValidateSet('v142','v143')]
+        [ValidateSet('v145','v143')]
         [Parameter(Position = 0, ValueFromPipeline = $true)]
         [string] $Toolchain,
 
@@ -153,7 +153,7 @@ function BuildSolution
 function VSX 
 {
     param(
-        [ValidateSet('v142','v143')]
+        [ValidateSet('v143','v145')]
         [Parameter(Position = 0, ValueFromPipeline = $true)]
         [string] $Toolchain
     )
@@ -168,10 +168,11 @@ function VSX
 
     switch -Exact ($Toolchain)
     {
-        'v142'
+        'v145'
         {
-            $VS_VER = 16;
-            $VS_OFFICIAL_VER = 2019;
+            $VS_VER = 18;
+            $VS_OFFICIAL_VER = 2026;
+			$VS_PRE = "-prerelease";
         }
         'v143'
         {
@@ -492,12 +493,11 @@ if($IsNetCoreBuild)
 }
 else
 {
-    $ARCHES.Remove("arm64")
     $CefSln = Join-Path $WorkingDir 'CefSharp3.sln'
     $NugetPackagePath = "nuget";
     $NupkgFiles = @('CefSharp.Common.nuspec', 'CefSharp.WinForms.nuspec', 'CefSharp.Wpf.nuspec', 'CefSharp.OffScreen.nuspec')
     $VCXProjPackageConfigFiles = @('CefSharp.Core.Runtime\packages.CefSharp.Core.Runtime.config', 'CefSharp.BrowserSubprocess.Core\packages.CefSharp.BrowserSubprocess.Core.config');
-    $SupportedArches.AddRange(@("x86", "x64"));
+    $SupportedArches.AddRange(@("x86", "x64", "arm64"));
 }
 
 # Extract the current CEF Redist version from the CefSharp.Core.Runtime\packages.CefSharp.Core.Runtime.config file
@@ -537,7 +537,7 @@ if(-not (Test-Path $VSWherePath))
     $VSWherePath = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
 }
 
-#Check if we already have vswhere which is included in newer versions of VS2017/VS2019
+#Check if we already have vswhere which is included in newer versions of VS2022
 if(-not (Test-Path $VSWherePath))
 {
     Write-Diagnostic "Downloading VSWhere as no install found at $VSWherePath"
@@ -577,9 +577,9 @@ switch -Exact ($Target)
     {
         Nupkg $NupkgFiles
     }
-    "vs2019"
+    "vs2026"
     {
-        VSX v142
+        VSX v145
         Nupkg $NupkgFiles
     }
     "vs2022"

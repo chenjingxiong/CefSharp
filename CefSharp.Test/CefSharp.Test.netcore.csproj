@@ -20,7 +20,7 @@
     <Platforms>x86;x64;arm64</Platforms>
     <!-- Explicitly set the PlatformTarget for arm64, see: https://github.com/dotnet/sdk/issues/15434 -->
     <PlatformTarget Condition="'$(Platform)' == 'arm64'">arm64</PlatformTarget>
-    <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
     <RuntimeIdentifier Condition="'$(Platform)' == 'x86'">win-x86</RuntimeIdentifier>
     <RuntimeIdentifier Condition="'$(Platform)' == 'x64'">win-x64</RuntimeIdentifier>
     <RuntimeIdentifier Condition="'$(Platform)' == 'arm64'">win-arm64</RuntimeIdentifier>
@@ -35,7 +35,7 @@
     <ProjectReference Include="..\CefSharp.Wpf\CefSharp.Wpf.netcore.csproj" />
     <ProjectReference Include="..\CefSharp.Example\CefSharp.Example.netcore.csproj" />
     <PackageReference Include="Bogus" Version="35.4.1" />
-    <PackageReference Include="chromiumembeddedframework.runtime" Version="151.3.16" />
+    <PackageReference Include="chromiumembeddedframework.runtime" Version="154.0.34" />
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -118,6 +118,7 @@
     <CefSharpTargetDir Condition="'$(CefSharpTargetDir)' != '' AND !HasTrailingSlash('$(CefSharpTargetDir)')">$(CefSharpTargetDir)\</CefSharpTargetDir>
     <CefSharpTargetDirAnyCpu32>$(CefSharpTargetDir)x86\</CefSharpTargetDirAnyCpu32>
     <CefSharpTargetDirAnyCpu64>$(CefSharpTargetDir)x64\</CefSharpTargetDirAnyCpu64>
+    <CefSharpTargetDirAnyCpuArm64>$(CefSharpTargetDir)arm64\</CefSharpTargetDirAnyCpuArm64>
     <!--
     For Sdk Projects the PlatformTarget is unreliable (https://github.com/dotnet/sdk/issues/1560)
     When our targets file is imported $(PlatformTarget) will be x86 when the Platform is infact AnyCPU.
@@ -186,6 +187,22 @@
   <Choose>
     <When Condition="'$(CefSharpBuildAction)' == 'None'">
       <Choose>
+        <When Condition="'$(CefSharpPlatformTarget)' == 'arm64'">
+          <ItemGroup>
+            <None Include="@(CefRedistArm64)">
+              <Link>$(CefSharpTargetDir)%(RecursiveDir)%(FileName)%(Extension)</Link>
+              <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+              <PublishState>Included</PublishState>
+              <Visible>false</Visible>
+            </None>
+            <None Include="@(CefSharpCommonBinariesArm64)">
+              <Link>$(CefSharpTargetDir)%(RecursiveDir)%(FileName)%(Extension)</Link>
+              <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+              <PublishState>Included</PublishState>
+              <Visible>false</Visible>
+            </None>
+          </ItemGroup>
+        </When>
         <When Condition="'$(CefSharpPlatformTarget)' == 'x64'">
           <ItemGroup>
             <None Include="@(CefRedist64)">
@@ -216,6 +233,12 @@
               <PublishState>Included</PublishState>
               <Visible>false</Visible>
             </None>
+            <None Include="@(CefRedistArm64)">
+              <Link>$(CefSharpTargetDirAnyCpuArm64)%(RecursiveDir)%(FileName)%(Extension)</Link>
+              <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+              <PublishState>Included</PublishState>
+              <Visible>false</Visible>
+            </None>
             <None Include="@(CefSharpCommonBinaries32)">
               <Link>$(CefSharpTargetDirAnyCpu32)%(RecursiveDir)%(FileName)%(Extension)</Link>
               <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -224,6 +247,12 @@
             </None>
             <None Include="@(CefSharpCommonBinaries64)">
               <Link>$(CefSharpTargetDirAnyCpu64)%(RecursiveDir)%(FileName)%(Extension)</Link>
+              <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+              <PublishState>Included</PublishState>
+              <Visible>false</Visible>
+            </None>
+            <None Include="@(CefSharpCommonBinariesArm64)">
+              <Link>$(CefSharpTargetDirAnyCpuArm64)%(RecursiveDir)%(FileName)%(Extension)</Link>
               <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
               <PublishState>Included</PublishState>
               <Visible>false</Visible>
@@ -244,6 +273,12 @@
               <PublishState>Included</PublishState>
               <Visible>false</Visible>
             </None>     
+            <None Include="@(CefSharpCommonManagedDll)">
+              <Link>$(CefSharpTargetDirAnyCpuArm64)%(RecursiveDir)%(FileName)%(Extension)</Link>
+              <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+              <PublishState>Included</PublishState>
+              <Visible>false</Visible>
+            </None>
           </ItemGroup>
         </When>
         <!-- x86 and Win32-->
@@ -267,6 +302,24 @@
     </When>
     <When Condition="'$(CefSharpBuildAction)' == 'Content'">
       <Choose>
+        <When Condition="'$(CefSharpPlatformTarget)' == 'arm64'">
+          <ItemGroup>
+            <Content Include="@(CefRedistArm64)">
+              <Link>$(CefSharpTargetDir)%(RecursiveDir)%(FileName)%(Extension)</Link>
+              <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+              <PublishState>Included</PublishState>
+              <Visible>false</Visible>
+			  <IncludeInVsix>true</IncludeInVsix>
+            </Content>
+            <Content Include="@(CefSharpCommonBinariesArm64)">
+              <Link>$(CefSharpTargetDir)%(RecursiveDir)%(FileName)%(Extension)</Link>
+              <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+              <PublishState>Included</PublishState>
+              <Visible>false</Visible>
+			  <IncludeInVsix>true</IncludeInVsix>
+            </Content>
+          </ItemGroup>
+        </When>
         <When Condition="'$(CefSharpPlatformTarget)' == 'x64'">
           <ItemGroup>
             <Content Include="@(CefRedist64)">
@@ -301,6 +354,13 @@
               <Visible>false</Visible>
 			  <IncludeInVsix>true</IncludeInVsix>
             </Content>
+            <Content Include="@(CefRedistArm64)">
+              <Link>$(CefSharpTargetDirAnyCpuArm64)%(RecursiveDir)%(FileName)%(Extension)</Link>
+              <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+              <PublishState>Included</PublishState>
+              <Visible>false</Visible>
+			  <IncludeInVsix>true</IncludeInVsix>
+            </Content>
             <Content Include="@(CefSharpCommonBinaries32)">
               <Link>$(CefSharpTargetDirAnyCpu32)%(RecursiveDir)%(FileName)%(Extension)</Link>
               <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -310,6 +370,13 @@
             </Content>
             <Content Include="@(CefSharpCommonBinaries64)">
               <Link>$(CefSharpTargetDirAnyCpu64)%(RecursiveDir)%(FileName)%(Extension)</Link>
+              <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+              <PublishState>Included</PublishState>
+              <Visible>false</Visible>
+			  <IncludeInVsix>true</IncludeInVsix>
+            </Content>
+            <Content Include="@(CefSharpCommonBinariesArm64)">
+              <Link>$(CefSharpTargetDirAnyCpuArm64)%(RecursiveDir)%(FileName)%(Extension)</Link>
               <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
               <PublishState>Included</PublishState>
               <Visible>false</Visible>
@@ -333,6 +400,13 @@
               <Visible>false</Visible>
 			  <IncludeInVsix>true</IncludeInVsix>
             </Content>     
+            <Content Include="@(CefSharpCommonManagedDll)">
+              <Link>$(CefSharpTargetDirAnyCpuArm64)%(RecursiveDir)%(FileName)%(Extension)</Link>
+              <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+              <PublishState>Included</PublishState>
+              <Visible>false</Visible>
+			  <IncludeInVsix>true</IncludeInVsix>
+            </Content>
           </ItemGroup>
         </When>
         <!-- x86 and Win32-->
@@ -388,6 +462,7 @@
   <Target Name="CefSharpCopyFilesAfterNugetRestore" AfterTargets="Build" DependsOnTargets="_CefSharpCopyFilesSetProperties" Condition="'$(NuGetProjectStyle)' != 'PackageReference' AND '$(CefSharpBuildAction)' != 'NoAction' AND '$(CefSharpPropertiesLoaded)' == ''">
     <CallTarget Targets="CefSharpCopyFilesAfterNugetRestore32" Condition="'$(_CefSharpPlatformTarget)' == 'x86' OR '$(_CefSharpPlatformTarget)' == 'AnyCPU'" />
     <CallTarget Targets="CefSharpCopyFilesAfterNugetRestore64" Condition="'$(_CefSharpPlatformTarget)' == 'x64' OR '$(_CefSharpPlatformTarget)' == 'AnyCPU'"/>
+    <CallTarget Targets="CefSharpCopyFilesAfterNugetRestoreArm64" Condition="'$(_CefSharpPlatformTarget)' == 'arm64' OR '$(_CefSharpPlatformTarget)' == 'AnyCPU'"/>
   </Target>
   
   <Target Name="CefSharpCopyFilesAfterNugetRestore32">
@@ -411,6 +486,17 @@
     <Message Importance="high" Text="Copying CefSharp.dll from $(MSBuildThisFileDirectory)..\lib\net462\CefSharp.dll to $(CefRedist64TargetDir)" />
     <Copy SourceFiles="@(_CefSharpCommonManagedDll)" DestinationFiles="@(_CefSharpCommonManagedDll->'$(CefRedist64TargetDir)\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
+
+  <Target Name="CefSharpCopyFilesAfterNugetRestoreArm64">
+    <Message Importance="high" Text="CefSharp - Files were not copied by MSBuild after Nuget install/restore! Manually copying files to $(CefRedistArm64TargetDir) as workaround. Please close and re-open $(MSBuildProjectFile)." />
+    <CallTarget Targets="CefRedistArm64CopyResources" Condition="'@(CefRedistArm64)' != ''"/>
+
+    <Message Importance="high" Text="Copying CefSharp Common arm64 files from $(MSBuildThisFileDirectory)..\CefSharp\arm64 to $(CefRedistArm64TargetDir)" />
+    <Copy SourceFiles="@(_CefSharpCommonBinariesArm64)" DestinationFiles="@(_CefSharpCommonBinariesArm64->'$(CefRedistArm64TargetDir)\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+
+    <Message Importance="high" Text="Copying CefSharp.dll from $(MSBuildThisFileDirectory)..\lib\net462\CefSharp.dll to $(CefRedistArm64TargetDir)" />
+    <Copy SourceFiles="@(_CefSharpCommonManagedDll)" DestinationFiles="@(_CefSharpCommonManagedDll->'$(CefRedistArm64TargetDir)\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
   
   <Target Name="_CefSharpCopyFilesSetProperties">
     <PropertyGroup>
@@ -423,13 +509,16 @@
     
       <CefRedist32TargetDir Condition="'$(CefRedist32TargetDir)' == ''">$(TargetDir)$(CefSharpTargetDir)</CefRedist32TargetDir>
       <CefRedist64TargetDir Condition="'$(CefRedist64TargetDir)' == ''">$(TargetDir)$(CefSharpTargetDir)</CefRedist64TargetDir>
+      <CefRedistArm64TargetDir Condition="'$(CefRedistArm64TargetDir)' == ''">$(TargetDir)$(CefSharpTargetDir)</CefRedistArm64TargetDir>
       <CefRedist32TargetDir Condition="'$(_CefSharpPlatformTarget)' == 'AnyCPU'">$(CefRedist32TargetDir)x86\</CefRedist32TargetDir>
       <CefRedist64TargetDir Condition="'$(_CefSharpPlatformTarget)' == 'AnyCPU'">$(CefRedist64TargetDir)x64\</CefRedist64TargetDir>
+	  <CefRedistArm64TargetDir Condition="'$(_CefSharpPlatformTarget)' == 'AnyCPU'">$(CefRedistArm64TargetDir)arm64\</CefRedistArm64TargetDir>
     </PropertyGroup>
     <ItemGroup>
       <_CefSharpCommonManagedDll Include="$(MSBuildThisFileDirectory)..\lib\net462\CefSharp.dll" />
       <_CefSharpCommonBinaries32 Include="$(MSBuildThisFileDirectory)..\CefSharp\x86\*.*" />
       <_CefSharpCommonBinaries64 Include="$(MSBuildThisFileDirectory)..\CefSharp\x64\*.*" />
+      <_CefSharpCommonBinariesArm64 Include="$(MSBuildThisFileDirectory)..\CefSharp\arm64\*.*" />
     </ItemGroup>
   </Target>
   

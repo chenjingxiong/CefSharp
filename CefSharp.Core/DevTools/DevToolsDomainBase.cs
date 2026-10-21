@@ -31,19 +31,6 @@ namespace CefSharp.DevTools
         /// <summary>
         /// Enum to string
         /// </summary>
-        /// <param name="values">array of type <see cref="CefSharp.DevTools.Network.ContentEncoding"/></param>
-        /// <returns>enumerable string</returns>
-        protected IEnumerable<string> EnumToString(CefSharp.DevTools.Network.ContentEncoding[] values)
-        {
-            foreach (var val in values)
-            {
-                yield return Internals.Json.JsonEnumConverterFactory.ConvertEnumToString(val);
-            }
-        }
-
-        /// <summary>
-        /// Enum to string
-        /// </summary>
         /// <param name="values">array of type <see cref="CefSharp.DevTools.Emulation.DisabledImageType"/></param>
         /// <returns>enumerable string</returns>
         protected IEnumerable<string> EnumToString(CefSharp.DevTools.Emulation.DisabledImageType[] values)
@@ -89,17 +76,6 @@ namespace CefSharp.DevTools
         }
 
         //TODO: Create a generic function that converts enum array to string
-        protected IEnumerable<string> EnumToString(ContentEncoding[] values)
-        {
-            foreach (var val in values)
-            {
-                var memInfo = val.GetType().GetMember(val.ToString());
-                var dataMemberAttribute = (EnumMemberAttribute)Attribute.GetCustomAttribute(memInfo[0], typeof(EnumMemberAttribute), false);
-
-                yield return dataMemberAttribute.Value;
-            }
-        }
-
         protected IEnumerable<string> EnumToString(Browser.PermissionType[] values)
         {
             foreach (var val in values)

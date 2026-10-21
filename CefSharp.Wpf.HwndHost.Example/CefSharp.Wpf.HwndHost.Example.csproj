@@ -2,7 +2,7 @@
     <PropertyGroup>
         <TargetFrameworks>net472</TargetFrameworks>
         <OutputType>WinExe</OutputType>
-        <Platforms>x86;x64</Platforms>
+        <Platforms>x86;x64;arm64</Platforms>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <UseWPF>true</UseWPF>
         <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
@@ -28,7 +28,7 @@
         <ProjectReference Include="..\CefSharp\CefSharp.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="chromiumembeddedframework.runtime" Version="151.3.16" />
+        <PackageReference Include="chromiumembeddedframework.runtime" Version="154.0.34" />
         <PackageReference Include="MaterialDesignThemes" Version="4.8.0" />
         <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
         <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
